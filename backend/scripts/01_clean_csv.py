@@ -13,7 +13,10 @@ Outputs: backend/data/movies_clean.parquet (~200k rows)
 import pandas as pd
 from pathlib import Path
 
-RAW_CSV = Path(__file__).resolve().parent.parent.parent / "TMDB_movie_dataset_v11.csv"
+# Check Docker mount point first, then fall back to local dev path
+_DOCKER_CSV = Path("/app/TMDB_movie_dataset_v11.csv")
+_LOCAL_CSV = Path(__file__).resolve().parent.parent.parent / "TMDB_movie_dataset_v11.csv"
+RAW_CSV = _DOCKER_CSV if _DOCKER_CSV.exists() else _LOCAL_CSV
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data"
 OUTPUT_PATH = OUTPUT_DIR / "movies_clean.parquet"
 

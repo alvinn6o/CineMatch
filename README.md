@@ -6,7 +6,7 @@ A full-stack web application that delivers **personalized, explainable movie rec
 
 ## Main Objectives
 
-1. **Personalized Recommendations** — Suggest movies tailored to each user's taste using content-based filtering (TF-IDF + cosine similarity), with human-readable explanations for every recommendation.
+1. **Personalized Recommendations** — Suggest movies tailored to each user's taste using content-based filtering (TF-IDF + cosine similarity), with explanations for every recommendation.
 2. **Viewing Analytics** — Provide interactive visualizations so users can explore patterns in their watched and watchlisted movies (genre distribution, release timeline, revenue breakdown, rating habits).
 3. **Movie Tracking** — Let users search a catalog of 200K movies, rate them 1–10 with notes, and maintain a watchlist for future viewing.
 4. **User Accounts** — Secure registration and login with JWT authentication and bcrypt password hashing.
@@ -17,7 +17,7 @@ A full-stack web application that delivers **personalized, explainable movie rec
 
 ### Data Pipeline
 
-The raw TMDB dataset (~930K rows, ~582 MB CSV) is processed through a three-stage pipeline:
+The raw TMDB dataset (~1million rows, ~582 MB CSV) is processed through a three-stage pipeline:
 1. Cleans data, filters out movies not currently released, non-adult movies with at least 1 vote and genres. Keeps top 200k by popularity. Outputs a clean parquet file for speed
 2. Load the SQLite tables: users, movies, watched, watchlist
 3. Build TF-IDF feature matrix and saves as feature_matrix.npz and movie_id.npy 
@@ -98,8 +98,11 @@ Four interactive charts built with Recharts:
 
 ```
 netflix_project/
+├── docker-compose.yml
+├── .env.example                # Environment variable template
 ├── README.md
 ├── backend/
+│   ├── Dockerfile
 │   ├── main.py                 # FastAPI app, routes, startup
 │   ├── models.py               # Pydantic response schemas
 │   ├── database.py             # SQLite schema and connection
@@ -117,6 +120,7 @@ netflix_project/
 │   ├── services/
 │   │   └── recommendation_service.py   # TF-IDF recommendation engine
 │   ├── scripts/
+│   │   ├── init_data.sh          # Docker init script
 │   │   ├── 01_clean_csv.py
 │   │   ├── 02_load_db.py
 │   │   └── 03_build_features.py
@@ -155,11 +159,39 @@ netflix_project/
 ## Getting Started
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+
+- [Docker](https://www.docker.com/products/docker-desktop/) installed and running
 - The TMDB dataset CSV (place in project root as `TMDB_movie_dataset_v11.csv`)
 
-### Backend Setup
+### Quick Start (Docker)
+
+```bash
+# 1. Clone the repo
+git clone <repo-url> && cd netflix_project
+
+# 2. Download the TMDB CSV and place it in the project root
+
+# 3. Create your environment file
+cp .env.example .env
+
+# 4. Build and run
+docker-compose up --build
+```
+
+The data pipeline runs automatically on first launch. Once complete, open `http://localhost:3000` in your browser.
+
+On subsequent runs, `docker-compose up` will skip the pipeline and start instantly.
+
+To reset all data and re-run the pipeline: `docker-compose down -v && docker-compose up --build`
+
+### Manual Setup (without Docker)
+
+<details>
+<summary>Click to expand</summary>
+
+**Prerequisites:** Python 3.10+, Node.js 18+
+
+```bash
+# Backend
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -171,14 +203,16 @@ python scripts/03_build_features.py
 
 # Start the API server
 uvicorn main:app --reload
+```
 
-
-### Frontend Setup
-
+```bash
+# Frontend (in a separate terminal)
 cd frontend
 npm install
 npm run dev
+```
 
+</details>
 
 The frontend runs at `http://localhost:3000` and the backend API at `http://localhost:8000`.
 
